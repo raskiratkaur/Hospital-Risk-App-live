@@ -5,13 +5,6 @@ scikit-learn
 xgboost
 catboost
 shap
-joblibstreamlit
-pandas
-numpy
-scikit-learn
-xgboost
-catboost
-shap
 matplotlib
 imbalanced-learn
 joblib
