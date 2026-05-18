@@ -116,8 +116,8 @@ def encode_and_scale():
     }
 
     df = pd.DataFrame([{f: input_dict.get(f, 0) for f in feature_names}])
-    cols_to_scale = [c for c in NUMERIC_COLS if c in df.columns]
-    df[cols_to_scale] = scaler.transform(df[cols_to_scale])
+    correct_order = scaler.feature_names_in_
+    df[correct_order] = scaler.transform(df[correct_order]) 
     return df
 
 # ── MAIN PAGE UI ──────────────────────────────────────────
