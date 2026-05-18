@@ -175,9 +175,14 @@ else:
         st.warning("⚠️ SHAP values are not natively supported for Stacking Meta-Models. Please select a base model from the sidebar.")
     else:
         try:
-            explainer = shap.TreeExplainer(active_model)
-            shap_vals = explainer.shap_values(input_df)
-            fig, ax = plt.subplots(figsize=(10,5))
+            # Generate SHAP explanation
+            explainer = shap.TreeExplainer(rf_model)
+            shap_values = explainer(input_df)
+        
+             # Create the plot, forcing it to only look at the positive class [:, 1]
+            fig, ax = plt.subplots(figsize=(8, 5))
+            shap.plots.waterfall(shap_values[0, :, 1], show=False)
+            st.pyplot(fig)
             shap.waterfall_plot(shap.Explanation(values=shap_vals[0], base_values=explainer.expected_value, data=input_df.iloc[0].values, feature_names=feature_names), max_display=10, show=False)
             st.pyplot(fig)
             plt.close()
