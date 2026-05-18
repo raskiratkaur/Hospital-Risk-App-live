@@ -175,16 +175,43 @@ else:
         st.warning("⚠️ SHAP values are not natively supported for Stacking Meta-Models. Please select a base model from the sidebar.")
     else:
         try:
-            # Generate SHAP explanation
+            # Calculate the SHAP math in the background
             explainer = shap.TreeExplainer(rf_model)
             shap_values = explainer(input_df)
         
-             # Create the plot, forcing it to only look at the positive class [:, 1]
-            fig, ax = plt.subplots(figsize=(8, 5))
+            # --- 1. SIMPLE ENGLISH EXPLANATION (Comes First) ---
+            st.markdown("### 💡 Why Did The Model Predict This?")
+            st.write("Here are the primary reasons justifying this specific prediction:")
+
+            # Extract impacts and find the top 5 most important factors
+            impacts = shap_values[0, :, 1].values 
+            impact_df = pd.DataFrame({
+                'Medical Factor': input_df.columns,
+                'Impact': impacts
+            })
+            impact_df['Abs_Impact'] = impact_df['Impact'].abs()
+            top_factors = impact_df.sort_values(by='Abs_Impact', ascending=False).head(5)
+        
+            # Display clean, color-coded reasoning
+            for _, row in top_factors.iterrows():
+                # Clean up the variable names so they look nice (e.g., "time_in_hospital" -> "Time In Hospital")
+                clean_name = row['Medical Factor'].replace('_', ' ').title()
+            
+                # MUST BE INDENTED INSIDE THE FOR LOOP
+                if row['Impact'] > 0.01:
+                    st.error(f"⬆️ **{clean_name}** is pushing the readmission risk HIGHER.")
+                elif row['Impact'] < -0.01:
+                    st.success(f"⬇️ **{clean_name}** is pushing the readmission risk LOWER.")
+
+            # --- 2. THE SMALLER SHAP PLOT (Comes Second) ---
+            st.markdown("---")
+            st.markdown("#### 📊 Detailed Breakdown Plot")
+        
+            # fig, ax = plt.subplots(figsize=(6, 4)) creates a much smaller chart
+            fig, ax = plt.subplots(figsize=(6, 4))
             shap.plots.waterfall(shap_values[0, :, 1], show=False)
             st.pyplot(fig)
-            shap.waterfall_plot(shap.Explanation(values=shap_vals[0], base_values=explainer.expected_value, data=input_df.iloc[0].values, feature_names=feature_names), max_display=10, show=False)
-            st.pyplot(fig)
             plt.close()
+            
         except Exception as e:
             st.error(f"Could not generate SHAP chart: {e}")
